@@ -236,7 +236,7 @@ COPY run_jupyter.sh /root/
 
 COPY check_versions.py /root/
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # Expose Ports for TensorBoard (6006), Ipython (8888)
 EXPOSE 6006 8888
