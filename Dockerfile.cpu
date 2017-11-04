@@ -121,14 +121,13 @@ RUN pip3 --no-cache-dir install \
 	sklearn \
 	sympy \
         && \
-    python -m ipykernel.kernelspec
+    python3 -m ipykernel.kernelspec
     
 
 # Install other useful Python packages using pip
 RUN pip3 --no-cache-dir install --upgrade ipython && \
 	pip3 --no-cache-dir install \
 		Cython \
-		jupyter \
 		path.py \
 		pygments \
 		six \
