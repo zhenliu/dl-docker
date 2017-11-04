@@ -117,7 +117,7 @@ RUN pip3 --no-cache-dir install \
         pandas \
         scipy \
 	nose \
-	skimage \
+	scikit-image \
 	sklearn \
 	sympy \
         && \
