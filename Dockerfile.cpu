@@ -137,6 +137,9 @@ RUN pip3 --no-cache-dir install --upgrade ipython && \
 		zmq 
 
 
+# Install xgboost
+RUN pip3 --no-cache-dir install --pre xgboost 
+
 
 # Install TensorFlow
 RUN pip3 --no-cache-dir install \
