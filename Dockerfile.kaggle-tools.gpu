@@ -1,5 +1,4 @@
-FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
-#FROM nvidia/cuda:8.0-cudnn6-runtime-ubuntu16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
 MAINTAINER Zhen Liu <liuzhen2010@hotmail.com>
 
@@ -128,7 +127,7 @@ RUN pip3 --no-cache-dir install --upgrade ipython && \
 # XGBoost-GPU
 ##############################################################################
 RUN cd /usr/local/src && git clone --recursive https://github.com/dmlc/xgboost && \
-    cd xgboost && mkdir build && cd build && cmake .. -DPLUGIN_UPDATER_GPU=ON && make -j4 && \
+    cd xgboost && mkdir build && cd build && cmake .. -DUSE_CUDA=ON && make -j4 && \
     cd ../python-package && python3 setup.py install
 
 
