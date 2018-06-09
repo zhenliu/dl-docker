@@ -1,34 +1,128 @@
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
-MAINTAINER nejumi <dr_jingles@mac.com>
+FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
+#FROM nvidia/cuda:8.0-cudnn6-runtime-ubuntu16.04
 
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:git-core/ppa && \
-    apt-get update && \
-    apt-get install -y git build-essential cmake && \
-    git --version
-           
-##############################################################################
-# anaconda python
-##############################################################################
-RUN apt-get update && \
-    apt-get install -y wget bzip2 ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+MAINTAINER Zhen Liu <liuzhen2010@hotmail.com>
 
-RUN wget https://repo.continuum.io/archive/Anaconda3-5.0.1-Linux-x86_64.sh && \
-    /bin/bash Anaconda3-5.0.1-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Anaconda3-5.0.1-Linux-x86_64.sh
+ARG TENSORFLOW_VERSION=1.8.0
+ARG TENSORFLOW_ARCH=gpu
+ARG KERAS_VERSION=2.2.0
 
-ENV PATH /opt/conda/bin:$PATH
-RUN pip install --upgrade pip
+ARG THEANO_VERSION=rel-0.8.2
+ARG LASAGNE_VERSION=v0.1
+ARG TORCH_VERSION=latest
+ARG CAFFE_VERSION=master
 
-RUN apt-get update && \
-    # Anaconda's build of gcc is way out of date; monkey-patch some linking problems that affect
-    # packages like xgboost and Shapely
-    rm /opt/conda/lib/libstdc++* && rm /opt/conda/lib/libgomp.* && \
-    ln -s /usr/lib/x86_64-linux-gnu/libgomp.so.1 /opt/conda/lib/libgomp.so.1 && \
-    ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/conda/lib/libstdc++.so.6
+#RUN echo -e "\n**********************\nNVIDIA Driver Version\n**********************\n" && \
+#	cat /proc/driver/nvidia/version && \
+#	echo -e "\n**********************\nCUDA Version\n**********************\n" && \
+#	nvcc -V && \
+#	echo -e "\n\nBuilding your Deep Learning Docker Image...\n"
+
+# Install some dependencies
+RUN apt-get update && apt-get install -y \
+		bc \
+		build-essential \
+		cmake \
+		curl \
+		g++ \
+		gfortran \
+		git \
+		libffi-dev \
+		libfreetype6-dev \
+		libhdf5-dev \
+		libjpeg-dev \
+		liblcms2-dev \
+		libopenblas-dev \
+		liblapack-dev \
+		libopenjpeg5 \
+		libpng12-dev \
+		libssl-dev \
+		libtiff5-dev \
+		libwebp-dev \
+		libzmq3-dev \
+		nano \
+		pkg-config \
+		python3-dev \
+		software-properties-common \
+		unzip \
+		vim \
+		wget \
+		zlib1g-dev \
+		qt5-default \
+		libvtk6-dev \
+		zlib1g-dev \
+		libwebp-dev \
+		libpng-dev \
+		libtiff5-dev \
+		libjasper-dev \
+		libopenexr-dev \
+		libgdal-dev \
+		libdc1394-22-dev \
+		libavcodec-dev \
+		libavformat-dev \
+		libswscale-dev \
+		libtheora-dev \
+		libvorbis-dev \
+		libxvidcore-dev \
+		libx264-dev \
+		yasm \
+		libopencore-amrnb-dev \
+		libopencore-amrwb-dev \
+		libv4l-dev \
+		libxine2-dev \
+		libtbb-dev \
+		libeigen3-dev \
+		python-dev \
+		python-tk \
+		python3-dev \
+		python3-tk \
+		python3-numpy \
+		ant \
+		default-jdk \
+		doxygen \
+		&& \
+	apt-get clean && \
+	apt-get autoremove && \
+	rm -rf /var/lib/apt/lists/*
+
+# Install pip
+RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
+	python3 get-pip.py && \
+	rm get-pip.py
+
+# Add SNI support to Python
+RUN pip3 --no-cache-dir install \
+		pyopenssl \
+		ndg-httpsclient \
+		pyasn1
+
+RUN pip3 --no-cache-dir install \
+        Pillow \
+        h5py \
+        ipykernel \
+        jupyter \
+        matplotlib \
+	mpld3 \
+        numpy \
+        pandas \
+        scipy \
+	nose \
+	scikit-image \
+	sklearn \
+	sympy \
+        && \
+    python3 -m ipykernel.kernelspec
+    
+# Install other useful Python packages using pip
+RUN pip3 --no-cache-dir install --upgrade ipython && \
+	pip3 --no-cache-dir install \
+		Cython \
+		path.py \
+		pygments \
+		six \
+		sphinx \
+		wheel \
+		zmq 
 
 ##############################################################################
 # XGBoost-GPU
@@ -37,11 +131,26 @@ RUN cd /usr/local/src && git clone --recursive https://github.com/dmlc/xgboost &
     cd xgboost && mkdir build && cd build && cmake .. -DPLUGIN_UPDATER_GPU=ON && make -j4 && \
     cd ../python-package && python3 setup.py install
 
-##############################################################################
-# keras
-##############################################################################
-RUN cd /usr/local/src && pip --no-cache-dir install -I -U tensorflow-gpu
-RUN pip install keras
+
+# Install TensorFlow
+RUN pip3 --no-cache-dir install \
+	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow_${TENSORFLOW_ARCH}-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
+
+
+# Install Keras
+RUN pip --no-cache-dir install git+git://github.com/fchollet/keras.git@${KERAS_VERSION}
+
+
+# Install OpenCV
+RUN git clone --depth 1 https://github.com/opencv/opencv.git /root/opencv && \
+	cd /root/opencv && \
+	mkdir build && \
+	cd build && \
+	cmake -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_EXAMPLES=ON .. && \
+	make -j"$(nproc)"  && \
+	make install && \
+	ldconfig && \
+	echo 'ln /dev/null /dev/raw1394' >> ~/.bashrc
 
 ##############################################################################
 # other libraries
@@ -49,3 +158,19 @@ RUN pip install keras
 RUN cd /usr/local/src && pip install catboost gmail lightgbm kaggle umap-learn tqdm hdbscan #TO DO: LightGBM-GPU is to be installed.
 RUN cd /usr/local/src && pip install git+https://github.com/LAL/trackml-library
 RUN cd /usr/local/src && pip install git+https://github.com/hyperopt/hyperopt.git
+
+# Set up notebook config
+COPY jupyter_notebook_config.py /root/.jupyter/
+
+# Jupyter has issues with being run directly: https://github.com/ipython/ipython/issues/7062
+COPY run_jupyter.sh /root/
+
+COPY check_versions.py /root/
+
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Expose Ports for TensorBoard (6006), Ipython (8888)
+EXPOSE 6006 8888
+
+WORKDIR "/root"
+CMD ["/bin/bash"]
