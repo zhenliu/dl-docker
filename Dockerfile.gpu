@@ -1,16 +1,9 @@
-#FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
-FROM nvidia/cuda:8.0-cudnn6-runtime-ubuntu16.04
+FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
 
 MAINTAINER Zhen Liu <liuzhen2010@hotmail.com>
 
-ARG TENSORFLOW_VERSION=1.4.0
+ARG TENSORFLOW_VERSION=1.9.0
 ARG TENSORFLOW_ARCH=gpu
-ARG KERAS_VERSION=2.0.9
-
-ARG THEANO_VERSION=rel-0.8.2
-ARG LASAGNE_VERSION=v0.1
-ARG TORCH_VERSION=latest
-ARG CAFFE_VERSION=master
 
 #RUN echo -e "\n**********************\nNVIDIA Driver Version\n**********************\n" && \
 #	cat /proc/driver/nvidia/version && \
@@ -129,16 +122,12 @@ RUN pip3 --no-cache-dir install \
 	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow_${TENSORFLOW_ARCH}-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
 
 
-# Install Keras
-RUN pip --no-cache-dir install git+git://github.com/fchollet/keras.git@${KERAS_VERSION}
-
-
 # Install OpenCV
 RUN git clone --depth 1 https://github.com/opencv/opencv.git /root/opencv && \
 	cd /root/opencv && \
 	mkdir build && \
 	cd build && \
-	cmake -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_EXAMPLES=ON .. && \
+	cmake -DWITH_OPENGL=OFF -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_EXAMPLES=ON .. && \
 	make -j"$(nproc)"  && \
 	make install && \
 	ldconfig && \
