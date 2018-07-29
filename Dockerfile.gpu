@@ -78,10 +78,15 @@ RUN apt-get update && apt-get install -y \
 	apt-get autoremove && \
 	rm -rf /var/lib/apt/lists/*
 
+# Make python3 default python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
 # Install pip
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 	python3 get-pip.py && \
 	rm get-pip.py
+
+RUN pip3 --no-cache-dir install --upgrade pip3
 
 # Add SNI support to Python
 RUN pip3 --no-cache-dir install \
@@ -160,8 +165,6 @@ COPY jupyter_notebook_config.py /root/.jupyter/
 COPY run_jupyter.sh /root/
 
 COPY check_versions.py /root/
-
-RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 # TF object detection api environment
 RUN echo "export PYTHONPATH=$PYTHONPATH:/root/tf_models/research:/root/tf_models/research/slim" >> /root/.bashrc
