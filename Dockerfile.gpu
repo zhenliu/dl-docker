@@ -86,7 +86,7 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 	python3 get-pip.py && \
 	rm get-pip.py
 
-RUN pip3 --no-cache-dir install --upgrade pip3
+RUN pip3 --no-cache-dir install --upgrade pip
 
 # Add SNI support to Python
 RUN pip3 --no-cache-dir install \
